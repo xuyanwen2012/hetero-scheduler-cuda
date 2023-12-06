@@ -23,6 +23,12 @@ end
 --     add_files("src/test_bandwidth.cu")
 --     add_cugencodes("native")
 
+target("query")
+    set_kind("binary")
+    add_includedirs("include")
+    add_files("src/device_query.cu")
+    add_cugencodes("native")
+
 target("main")
     set_kind("binary")
     set_default(true)

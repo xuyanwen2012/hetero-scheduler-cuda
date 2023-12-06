@@ -30,51 +30,11 @@ int main() {
   checkCudaErrors(cudaMallocManaged(&data, n * sizeof(float)));
   checkCudaErrors(cudaMallocManaged(&out_data, n * sizeof(float)));
 
-  int numSMs;
-  cudaGetDeviceCount(&numSMs);
-
-  // print how many SMs on this GPU
-  std::cout << "Number of SMs: " << numSMs << std::endl;
-
-  if (numSMs < 1) {
-    std::cerr << "No SMs found on the GPU." << std::endl;
-    return 1;
-  }
-
-  int targetSM = 0;  // Targeting the first SM (SM 0)
-
-  cudaDeviceProp deviceProp;
-  cudaGetDeviceProperties(&deviceProp,
-                          0);  // Assuming you are using the first GPU
-
-  int maxThreadsPerSM = deviceProp.maxThreadsPerMultiProcessor;
-  int maxBlocksPerSM = deviceProp.maxBlocksPerMultiProcessor;
-
-  std::cout << "Max threads per SM: " << maxThreadsPerSM << std::endl;
-  std::cout << "Max blocks per SM: " << maxBlocksPerSM << std::endl;
-
-  int numThreadsPerBlock = 256;    // Choose an appropriate value
-  int numBlocks = maxBlocksPerSM;  // Use all blocks on the target SM
-
-  if (numThreadsPerBlock > maxThreadsPerSM) {
-    std::cerr
-        << "The selected number of threads per block exceeds the SM's limit."
-        << std::endl;
-    return 1;
-  }
-
-  if (numBlocks > maxBlocksPerSM) {
-    std::cerr << "The selected number of blocks exceeds the SM's limit."
-              << std::endl;
-    return 1;
-  }
-
-  // print how many memory used
-  std::cout << "Memory used: " << n * sizeof(float) / 1024 / 1024 << " MB"
-            << std::endl;
-
   // initialize data
   std::iota(data, data + n, 0.0f);
+
+  constexpr std::size_t numThreadsPerBlock = 256;
+  constexpr std::size_t numBlocks = 16;  // blocks per SM
 
   // warmup
   emptyKernel<<<numBlocks, numThreadsPerBlock>>>();
