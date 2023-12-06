@@ -29,7 +29,7 @@ void stage4(float* data, const std::size_t count) {
 }
 
 int main() {
-  const std::size_t count = 10'000'000;
+  constexpr std::size_t count = 10'000'000;
   float* data1 = new float[count];
   std::cout << "Memory consumption: " << count * sizeof(float) / 1024 / 1024
             << " MB\n";

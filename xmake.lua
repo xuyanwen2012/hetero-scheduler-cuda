@@ -1,10 +1,8 @@
 add_rules("mode.debug", "mode.release")
 
-add_requires("cuda", {system = true})
+add_requires("cuda", "libomp", {system = true})
 
-add_requires("libomp", {optional = true})
-
-set_languages("c++20")
+set_languages("c++17")
 set_warnings("all")
 
 if is_mode("debug") then
@@ -27,13 +25,11 @@ target("main")
     set_kind("binary")
     set_default(true)
     add_includedirs("include")
-    add_headerfiles("include/*.h", "include/**/*.h")
+    add_headerfiles("include/*.hpp", "include/**/*.hpp")
     add_files("src/main.cu")
 
     add_packages("libomp")
-    -- add_packages("cuda", "cutlass")
 
     add_cugencodes("native")
-    add_cugencodes("compute_75")
 
 
