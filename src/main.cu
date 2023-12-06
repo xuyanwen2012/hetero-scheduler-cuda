@@ -74,6 +74,9 @@ int main() {
   constexpr auto numThreadsPerBlock = 128;
 
   cudaStream_t* streams = new cudaStream_t[nthreads];
+  for (int i = 0; i < nthreads; i++) {
+    checkCudaErrors(cudaStreamCreate(&streams[i]));
+  }
 
   // initialize data
   std::iota(data, data + n, 0.0f);
