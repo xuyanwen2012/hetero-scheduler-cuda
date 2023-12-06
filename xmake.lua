@@ -1,6 +1,8 @@
 add_rules("mode.debug", "mode.release")
 
-add_requires("cuda", "libomp", {system = true})
+add_requires("cuda", {system = true})
+add_requires("libomp")
+
 
 set_languages("c++17")
 set_warnings("all")
