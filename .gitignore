@@ -1,6 +1,12 @@
-.xmake/
 build/
 
+# Xmake Related
+.xmake/
+vsxmake2022/
+
+# Visual Studio Code
 .vscode/
 
-vsxmake2022/
+# Nsight Reports
+*.ncu-rep
+*.nsys-rep

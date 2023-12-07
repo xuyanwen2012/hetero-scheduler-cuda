@@ -23,8 +23,10 @@ target("main")
     set_default(true)
     add_includedirs("include")
     add_headerfiles("include/*.hpp", "include/**/*.hpp")
-    add_files("src/main.cpp")
+    add_files("src/main.cu")
 
+    -- must have for nvcc to use OpenMP 
+    add_cuflags("-Xcompiler", "-fopenmp", {force = true})
 
     add_packages("cli11", "spdlog")
     add_packages("openmp")
