@@ -1,3 +1,4 @@
+#include <CLI/CLI.hpp>
 #include <Common/helper_cuda.hpp>  // helper functions for CUDA error checking and initialization
 #include <algorithm>
 #include <functional>
@@ -54,12 +55,23 @@ void measureCudaKernel(std::function<void()> kernelFunc,
   cudaEventDestroy(stop);
 }
 
-int main() {
+int main(int argc, char** argv) {
+  CLI::App app("My C++ App");
+
+  int num_threads = 1;
+
+  app.add_option("-t,--threads", num_threads, "Number of threads")
+      ->default_val(1);
+
+  CLI11_PARSE(app, argc, argv);
+
+  omp_set_num_threads(num_threads);
+
   constexpr std::size_t n = 10'000'000;
 
   // Duck has 8 SMs
   // Toucan has 36 SMs
-  constexpr auto num_sm = 8;
+  // constexpr auto num_sm = 8;
 
   float* data;
   float* out_data;
@@ -69,12 +81,8 @@ int main() {
   checkCudaErrors(cudaMallocManaged(&out_data, n * sizeof(float)));
   checkCudaErrors(cudaMallocManaged(&out_data_2, n * sizeof(float)));
 
-  constexpr auto nthreads = 4;
-  constexpr auto numBlocks = 1;
-  constexpr auto numThreadsPerBlock = 128;
-
-  cudaStream_t* streams = new cudaStream_t[nthreads];
-  for (int i = 0; i < nthreads; i++) {
+  cudaStream_t* streams = new cudaStream_t[num_threads];
+  for (int i = 0; i < num_threads; i++) {
     checkCudaErrors(cudaStreamCreate(&streams[i]));
   }
 
@@ -85,7 +93,7 @@ int main() {
   // constexpr std::size_t numBlocks = 16;  // blocks per SM
 
   // warmup
-  emptyKernel<<<numBlocks, numThreadsPerBlock>>>();
+  emptyKernel<<<1, 1>>>();
 
   cudaEvent_t start, stop;
   cudaEventCreate(&start);
@@ -93,9 +101,8 @@ int main() {
 
   cudaEventRecord(start, nullptr);
 
-  // measureCudaKernel([&]() {
-#pragma omp parallel for
-  for (int i = 0; i < nthreads; ++i) {
+#pragma omp parallel for 
+  for (int i = 0; i < num_threads; ++i) {
     printf("Thread %d\n", i);
     const auto offset = i * 128;
     kernel1<<<1, 128, 0, streams[i]>>>(data + offset, out_data + offset, i);
@@ -127,7 +134,7 @@ int main() {
   checkCudaErrors(cudaFree(out_data));
   checkCudaErrors(cudaFree(out_data_2));
 
-  for (int i = 0; i < nthreads + 1; i++) {
+  for (int i = 0; i < num_threads + 1; i++) {
     cudaStreamDestroy(streams[i]);
   }
 

@@ -1,7 +1,11 @@
 add_rules("mode.debug", "mode.release")
 
 add_requires("cuda", {system = true})
+
 add_requires("libomp")
+
+add_requires("spdlog", "cli11")
+
 
 
 set_languages("c++17")
@@ -36,7 +40,7 @@ target("main")
     add_headerfiles("include/*.hpp", "include/**/*.hpp")
     add_files("src/main.cu")
 
-    add_packages("libomp")
+    add_packages("libomp", "cli11", "spdlog")
 
     add_cugencodes("native")
 
