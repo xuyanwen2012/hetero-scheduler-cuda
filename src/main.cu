@@ -7,7 +7,7 @@
 
 #include "omp.h"
 
-__global__ void emptyKernel() {}
+__global__ void EmptyKernel() {}
 
 // __global__ void do_some_work(float* in, float* out, const std::size_t n) {
 //   const auto i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -28,20 +28,20 @@ __device__ float do_some_work_func(float temp) {
   return temp;
 }
 
-__global__ void kernel1(float* in, float* out, int which_sm) {
+__global__ void kernel1(const float* in, float* out, const int which_sm) {
   const auto i = threadIdx.x;
   out[i] = do_some_work_func(in[i]) + which_sm * 1000000;
 }
 
-void measureCudaKernel(std::function<void()> kernelFunc,
-                       const char* kernelName = "CUDA Kernel") {
+void MeasureCudaKernel(const std::function<void()>& kernel_func,
+                       const char* kernel_name = "CUDA Kernel") {
   cudaEvent_t start, stop;
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
 
   cudaEventRecord(start, nullptr);
 
-  kernelFunc();
+  kernel_func();
 
   cudaEventRecord(stop, nullptr);
   cudaEventSynchronize(stop);
@@ -49,7 +49,7 @@ void measureCudaKernel(std::function<void()> kernelFunc,
   float milliseconds = 0;
   cudaEventElapsedTime(&milliseconds, start, stop);
 
-  std::cout << kernelName << " - Elapsed time: " << milliseconds << " ms\n";
+  std::cout << kernel_name << " - Elapsed time: " << milliseconds << " ms\n";
 
   cudaEventDestroy(start);
   cudaEventDestroy(stop);
@@ -81,8 +81,8 @@ int main(int argc, char** argv) {
   checkCudaErrors(cudaMallocManaged(&out_data, n * sizeof(float)));
   checkCudaErrors(cudaMallocManaged(&out_data_2, n * sizeof(float)));
 
-  cudaStream_t* streams = new cudaStream_t[num_threads];
-  for (int i = 0; i < num_threads; i++) {
+  auto streams = new cudaStream_t[threads];
+  for (int i = 0; i < threads; i++) {
     checkCudaErrors(cudaStreamCreate(&streams[i]));
   }
 
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
   // constexpr std::size_t numBlocks = 16;  // blocks per SM
 
   // warmup
-  emptyKernel<<<1, 1>>>();
+  EmptyKernel<<<num_blocks, num_threads_per_block>>>();
 
   cudaEvent_t start, stop;
   cudaEventCreate(&start);
@@ -101,8 +101,9 @@ int main(int argc, char** argv) {
 
   cudaEventRecord(start, nullptr);
 
-#pragma omp parallel for 
-  for (int i = 0; i < num_threads; ++i) {
+  // measureCudaKernel([&]() {
+#pragma omp parallel for
+  for (int i = 0; i < threads; ++i) {
     printf("Thread %d\n", i);
     const auto offset = i * 128;
     kernel1<<<1, 128, 0, streams[i]>>>(data + offset, out_data + offset, i);
@@ -134,7 +135,7 @@ int main(int argc, char** argv) {
   checkCudaErrors(cudaFree(out_data));
   checkCudaErrors(cudaFree(out_data_2));
 
-  for (int i = 0; i < num_threads + 1; i++) {
+  for (int i = 0; i < threads + 1; i++) {
     cudaStreamDestroy(streams[i]);
   }
 
